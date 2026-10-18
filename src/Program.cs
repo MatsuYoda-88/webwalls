@@ -2,9 +2,9 @@ namespace WebWalls;
 
 internal static class Program
 {
-    [STAThread]
     public const string QuitEventName = @"Local\WebWalls.Quit";
 
+    [STAThread]
     private static void Main(string[] args)
     {
         // "WebWalls.exe --quit" politely closes the running copy (used by the installer / uninstaller),
