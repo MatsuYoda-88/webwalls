@@ -1,10 +1,11 @@
 name: Release web.walls
 
-# Push a tag like v0.5.0 and GitHub builds WebWalls.exe, wraps it in the installer,
-# and publishes a Release with WebWalls-Setup-x.y.z.exe attached.
+# Every push to main: read the version from src/WebWalls.csproj. If there's no GitHub Release for that
+# version yet, build WebWalls.exe, wrap it in the installer, and publish Release vX.Y.Z with the
+# installer attached. So to ship a new version: bump <Version> in the csproj and push.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,47 +17,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-
       - name: Work out the version
         id: ver
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $v = "${{ github.ref_name }}"
-          if ($v -notmatch '^v\d') { $v = "v" + ([xml](Get-Content src/WebWalls.csproj)).Project.PropertyGroup.Version }
-          "version=$($v.TrimStart('v'))" >> $env:GITHUB_OUTPUT
+          $v = ([xml](Get-Content src/WebWalls.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          "version=$v" >> $env:GITHUB_OUTPUT
+          gh release view "v$v" --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) { "exists=true" >> $env:GITHUB_OUTPUT; Write-Host "Release v$v already exists, nothing to do." }
+          else { "exists=false" >> $env:GITHUB_OUTPUT; Write-Host "Building release v$v" }
+          exit 0
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.ver.outputs.exists == 'false'
+        with:
+          dotnet-version: '8.0.x'
 
       - name: Build WebWalls.exe
+        if: steps.ver.outputs.exists == 'false'
         run: >
           dotnet publish src/WebWalls.csproj -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:EnableCompressionInSingleFile=true -p:Version=${{ steps.ver.outputs.version }} -o dist
+          -p:EnableCompressionInSingleFile=true -o dist
 
       - name: Build the installer
+        if: steps.ver.outputs.exists == 'false'
         shell: pwsh
         run: |
-          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
-            choco install innosetup -y --no-progress
-          }
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
-          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          if (-not $iscc -and (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          if (-not $iscc) {
+            choco install innosetup -y --no-progress
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          }
           & $iscc "/DAppVersion=${{ steps.ver.outputs.version }}" installer\WebWalls.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: steps.ver.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
           $v = "${{ steps.ver.outputs.version }}"
-          gh release create "${{ github.ref_name }}" "release\WebWalls-Setup-$v.exe" `
-            --title "web.walls $v" --notes-file RELEASE_NOTES.md
-
-      - name: Keep the installer as a build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: WebWalls-Setup-${{ steps.ver.outputs.version }}
-          path: release/*.exe
+          gh release create "v$v" "release\WebWalls-Setup-$v.exe" --repo "${{ github.repository }}" `
+            --target "${{ github.sha }}" --title "web.walls $v" --notes-file RELEASE_NOTES.md

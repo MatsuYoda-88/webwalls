@@ -68,7 +68,7 @@ window.__webwalls.screen  // { index, count, width, height, aspect, shape: 'ultr
 ## Releases
 Friends get a normal Windows installer: **WebWalls-Setup-x.y.z.exe**. It needs no admin, adds a Start menu entry and an optional "start with Windows", and uninstalls cleanly from *Settings → Apps*.
 
-- **Publish it on GitHub:** push a version tag (like `v0.5.0`). GitHub Actions builds everything and creates a Release page with the installer attached. Send friends that link.
+- **Publish a new version:** bump `<Version>` in `src\WebWalls.csproj` and push to main. GitHub Actions builds the app + installer and creates the Release automatically. Send friends the Releases link.
 - Friends will see **"Windows protected your PC"** (it's not paid-signed): **More info → Run anyway**. The release notes tell them this.
 
 ## Build it yourself
