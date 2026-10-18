@@ -1,0 +1,62 @@
+name: Release web.walls
+
+# Push a tag like v0.5.0 and GitHub builds WebWalls.exe, wraps it in the installer,
+# and publishes a Release with WebWalls-Setup-x.y.z.exe attached.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Work out the version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}"
+          if ($v -notmatch '^v\d') { $v = "v" + ([xml](Get-Content src/WebWalls.csproj)).Project.PropertyGroup.Version }
+          "version=$($v.TrimStart('v'))" >> $env:GITHUB_OUTPUT
+
+      - name: Build WebWalls.exe
+        run: >
+          dotnet publish src/WebWalls.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:Version=${{ steps.ver.outputs.version }} -o dist
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVersion=${{ steps.ver.outputs.version }}" installer\WebWalls.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          gh release create "${{ github.ref_name }}" "release\WebWalls-Setup-$v.exe" `
+            --title "web.walls $v" --notes-file RELEASE_NOTES.md
+
+      - name: Keep the installer as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebWalls-Setup-${{ steps.ver.outputs.version }}
+          path: release/*.exe
