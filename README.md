@@ -1,10 +1,12 @@
 # web.walls
 
-**Animated live wallpapers for Windows 10/11**: neon synthwave highways, rainy cities, northern lights, and crusader battles, running behind your desktop icons.
+**Animated live wallpapers for Windows 10/11**: an OLED-tuned neon galaxy, neon synthwave highways, rainy cities, northern lights, and crusader battles, running behind your desktop icons.
 
 ### [⬇ Download the latest installer](https://github.com/MatsuYoda-88/webwalls/releases/latest)
 
 Grab **WebWalls-Setup-x.y.z.exe** under *Assets*. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**. It's a free hobby app and isn't paid-signed; that's the only reason. No admin needed.
+
+![Neon Galaxy on an ultrawide](docs/neon-galaxy.jpg)
 
 ![Neon Highway on an ultrawide](docs/neon-highway.jpg)
 
@@ -48,6 +50,10 @@ Install it, then look for the neon **W** in the system tray (click the `^` arrow
 - **Frame rate cap:** Unlimited / 60 / 30 / 15 in *Performance → Frame rate*. Works on any HTML wallpaper, even ones that don't know about web.walls.
 - **Sound:** wallpapers are muted by default.
 
+## Neon Galaxy (v0.6)
+- A GPU-rendered spiral galaxy tuned for OLED. Empty space is true black (pixels fully off), colours are fully saturated, and it renders at native resolution and your screen's full refresh rate.
+- Burn-in friendly: the galaxy spins, wanders and tilts, nebulae flow, stars drift in parallax, shooting stars fly through, and the colours cycle every ~5 minutes.
+
 ## Your own wallpapers
 *Wallpapers → Load my own HTML…* and pick an `.html` file. Images, scripts and videos next to it (or in subfolders) load fine because the folder is served like a mini website.
 
@@ -72,7 +78,7 @@ Friends get a normal Windows installer: **WebWalls-Setup-x.y.z.exe**. It needs n
 - Friends will see **"Windows protected your PC"** (it's not paid-signed): **More info → Run anyway**. The release notes tell them this.
 
 ## Build it yourself
-Needs the .NET 8 SDK and Inno Setup 6: `dotnet publish src\WebWalls.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist`, then `ISCC /DAppVersion=0.5.0 installer\WebWalls.iss`.
+Needs the .NET 8 SDK and Inno Setup 6: `dotnet publish src\WebWalls.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist`, then `ISCC /DAppVersion=0.6.0 installer\WebWalls.iss`.
 
 ## Files
 - `src\` C# app (WinForms + WebView2)

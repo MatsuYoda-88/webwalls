@@ -1,5 +1,5 @@
 ; web.walls installer (Inno Setup 6)
-; Build:  ISCC.exe /DAppVersion=0.5.0 installer\WebWalls.iss      (expects dist\WebWalls.exe to exist)
+; Build:  ISCC.exe /DAppVersion=0.6.0 installer\WebWalls.iss      (expects dist\WebWalls.exe to exist)
 ; Installs per-user (no admin prompt) to %LOCALAPPDATA%\Programs\web.walls
 
 #ifndef AppVersion

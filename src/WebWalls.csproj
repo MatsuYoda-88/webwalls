@@ -9,12 +9,14 @@
     <AssemblyName>WebWalls</AssemblyName>
     <RootNamespace>WebWalls</RootNamespace>
     <Product>web.walls for Windows</Product>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationIcon>assets\webwalls.ico</ApplicationIcon>
     <!-- lets you build from Linux/CI too -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- single-file publish must carry WebView2Loader.dll & friends INSIDE the exe: the installer only ships WebWalls.exe -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,7 +6,7 @@
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
 ## What's in it
-- 7 animated wallpapers: Neon Highway, Midnight Rain City, Aurora Lake, Baldwin's Crusade, and the Montgisard trilogy
+- 8 animated wallpapers: Neon Galaxy (new in v0.6, OLED-tuned), Neon Highway, Midnight Rain City, Aurora Lake, Baldwin's Crusade, and the Montgisard trilogy
 - Works on every monitor: ultrawide, 16:9 and portrait screens all get their own properly fitted copy
 - Gaming-aware: the screen your game is on sleeps completely, and your other screens drop to 30 FPS / half resolution while you play (windowed games too)
 - Battery saver, FPS cap, quality setting, and load your own HTML wallpapers
