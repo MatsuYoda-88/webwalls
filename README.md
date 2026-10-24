@@ -4,7 +4,9 @@
 
 ### [⬇ Download the latest installer](https://github.com/MatsuYoda-88/webwalls/releases/latest)
 
-Grab **WebWalls-Setup-x.y.z.exe** under *Assets*. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**. It's a free hobby app and isn't paid-signed; that's the only reason. No admin needed.
+Grab **WebWalls-Setup-x.y.z.exe** under *Assets*.
+
+**On Android?** Grab **WebWalls-Android-x.y.apk** from the newest *web.walls for Android* release on the [Releases page](https://github.com/MatsuYoda-88/webwalls/releases). If Windows says **"Windows protected your PC"**, click **More info → Run anyway**. It's a free hobby app and isn't paid-signed; that's the only reason. No admin needed.
 
 ![Neon Galaxy on an ultrawide](docs/neon-galaxy.jpg)
 

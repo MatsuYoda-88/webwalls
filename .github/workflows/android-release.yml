@@ -1,0 +1,33 @@
+name: Release web.walls for Android
+
+# When android/VERSION changes on main and there's no "android-vX.Y" release yet,
+# publish android/WebWalls-Android-X.Y.apk as a release. It never takes the "Latest"
+# spot, so releases/latest keeps pointing at the Windows installer friends already use.
+on:
+  push:
+    branches: [main]
+    paths: ['android/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish the APK if this version has no release yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=$(tr -d '\r\n ' < android/VERSION)
+          tag="android-v$v"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "$tag is already released, nothing to do."; exit 0
+          fi
+          apk="android/WebWalls-Android-$v.apk"
+          test -f "$apk" || { echo "Missing $apk"; exit 1; }
+          gh release create "$tag" "$apk" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "web.walls for Android $v" --notes-file android/RELEASE_NOTES.md --latest=false
