@@ -36,7 +36,7 @@ RestartApplications=no
 WelcomeLabel2=This will install web.walls {#AppVersion}: animated live wallpapers that run behind your desktop icons.%n%nIt works on every monitor (32:9 super-ultrawide, ultrawide and portrait too) and backs off automatically while you game.
 
 [Tasks]
-Name: "startup"; Description: "Start web.walls when I sign in to Windows"; GroupDescription: "Extras:"; Flags: unchecked
+Name: "startup"; Description: "Start web.walls when I sign in to Windows"; GroupDescription: "Extras:"
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Extras:"; Flags: unchecked
 
 [Files]
