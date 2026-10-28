@@ -255,7 +255,7 @@ internal sealed class TrayApp : ApplicationContext
         // Performance
         var perf = new ToolStripMenuItem("Performance");
         var fpsMenu = new ToolStripMenuItem("Frame rate");
-        foreach (var (label, val) in new[] { ("Unlimited", 0), ("60 FPS", 60), ("30 FPS", 30), ("15 FPS (potato mode)", 15) })
+        foreach (var (label, val) in new[] { ("Unlimited (match screen)", 0), ("240 FPS", 240), ("144 FPS", 144), ("120 FPS", 120), ("60 FPS", 60), ("30 FPS", 30), ("15 FPS (potato mode)", 15) })
             fpsMenu.DropDownItems.Add(Check(label, _settings.FpsCap == val, () => _settings.FpsCap = val));
         perf.DropDownItems.Add(fpsMenu);
 

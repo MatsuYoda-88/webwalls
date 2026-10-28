@@ -38,6 +38,10 @@ Install it, then look for the neon **W** in the system tray (click the `^` arrow
 - **Displays menu:** right-click the tray icon → *Displays* to switch the wallpaper off on any monitor (e.g. ultrawide only). *Show on all displays* turns them all back on.
 - **Plug / unplug / rotate:** web.walls notices, waits a second for Windows to settle, then rebuilds only if the layout actually changed.
 
+## Super-ultrawide 32:9 (v0.7)
+- **5120×1440 / 3840×1080 screens** (Odyssey OLED G9 and friends) get a fitted copy that fills the full 32:9 width. Wallpaper makers can target them with the `ww-superultrawide` class or `window.__webwalls.screen.shape === 'superultrawide'`.
+- **High refresh:** *Performance → Frame rate* adds 240 / 144 / 120 FPS; *Unlimited* runs at your screen's native refresh.
+
 ## Gaming (v0.3)
 - **The screen your game is on sleeps completely**, so it doesn't fight the game for the GPU.
 - **Your other screens go lighter while you play** (30 FPS, half resolution). Change this in *Performance → Gaming*: Lighter / Freeze / Full quality.

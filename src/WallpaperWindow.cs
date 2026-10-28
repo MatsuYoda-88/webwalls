@@ -63,16 +63,17 @@ internal sealed class WallpaperWindow : Form
         Screen = screen;
         var b = screen.Bounds;
         double aspect = (double)b.Width / Math.Max(1, b.Height);
-        string shape = aspect >= 2.1 ? "ultrawide" : aspect < 1.0 ? "portrait" : "wide";
+        // 32:9 super-ultrawides (5120x1440, 3840x1080) are ~3.56; 21:9 is ~2.37.
+        string shape = aspect >= 3.0 ? "superultrawide" : aspect >= 2.1 ? "ultrawide" : aspect < 1.0 ? "portrait" : "wide";
         // Tells the wallpaper what kind of screen it's on (optional for wallpaper makers to use):
         //   window.__webwalls.screen = { index, count, width, height, aspect, shape, primary }
-        //   + a class on <html>: ww-ultrawide / ww-wide / ww-portrait
+        //   + a class on <html>: ww-superultrawide (+ ww-ultrawide) / ww-ultrawide / ww-wide / ww-portrait
         _screenInfo = "(() => { const s = { index: " + index + ", count: " + count +
             ", width: " + b.Width + ", height: " + b.Height +
             ", aspect: " + aspect.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) +
             ", shape: '" + shape + "', primary: " + (screen.Primary ? "true" : "false") + " };" +
             " if (window.__webwalls) window.__webwalls.screen = s;" +
-            " const tag = () => document.documentElement && document.documentElement.classList.add('ww-' + s.shape);" +
+            " const tag = () => { const h = document.documentElement; if (!h) return; h.classList.add('ww-' + s.shape); if (s.shape === 'superultrawide') h.classList.add('ww-ultrawide'); };" +
             " tag(); addEventListener('DOMContentLoaded', tag); })();";
         _bounds = screen.Bounds;
         FormBorderStyle = FormBorderStyle.None;
