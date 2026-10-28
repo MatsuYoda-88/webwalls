@@ -38,6 +38,9 @@ Install it, then look for the neon **W** in the system tray (click the `^` arrow
 - **Displays menu:** right-click the tray icon → *Displays* to switch the wallpaper off on any monitor (e.g. ultrawide only). *Show on all displays* turns them all back on.
 - **Plug / unplug / rotate:** web.walls notices, waits a second for Windows to settle, then rebuilds only if the layout actually changed.
 
+## OLED showcase scenes (v0.8)
+- **Event Horizon, Abyss, Prairie Fireflies, Fractal Dive**: GPU-rendered at each screen's exact pixels up to 8K, frame-rate independent up to 240 Hz, true-black backgrounds. Source shaders live in `tools/gen_oled.py`.
+
 ## Super-ultrawide 32:9 (v0.7)
 - **5120×1440 / 3840×1080 screens** (Odyssey OLED G9 and friends) get a fitted copy that fills the full 32:9 width. Wallpaper makers can target them with the `ww-superultrawide` class or `window.__webwalls.screen.shape === 'superultrawide'`.
 - **High refresh:** *Performance → Frame rate* adds 240 / 144 / 120 FPS; *Unlimited* runs at your screen's native refresh.
