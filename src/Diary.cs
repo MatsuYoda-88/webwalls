@@ -1,7 +1,7 @@
 namespace WebWalls;
 
 /// <summary>Small diary of what web.walls fixed on its own: %APPDATA%\WebWalls\events.log (kept under ~200 KB).</summary>
-internal static class Events
+internal static class Diary
 {
     private static readonly object Gate = new();
 

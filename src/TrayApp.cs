@@ -192,7 +192,7 @@ internal sealed class TrayApp : ApplicationContext
         foreach (var w in _windows.ToList())
         {
             string? what = w.EnsureAttached();
-            if (what != null) Events.Log($"{w.Screen.DeviceName}: re-glued behind icons ({what}; {why})");
+            if (what != null) Diary.Log($"{w.Screen.DeviceName}: re-glued behind icons ({what}; {why})");
         }
     }
 
@@ -207,7 +207,7 @@ internal sealed class TrayApp : ApplicationContext
 
     private void OnBrowserDied(WallpaperWindow w, string why)
     {
-        Events.Log($"{w.Screen.DeviceName}: browser died ({why}), rebuilding");
+        Diary.Log($"{w.Screen.DeviceName}: browser died ({why}), rebuilding");
         _ = RebuildWindowsAsync();
     }
 

@@ -163,7 +163,7 @@ internal sealed class WallpaperWindow : Form
 
     private void OnProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
     {
-        Events.Log($"{Screen.DeviceName}: browser part crashed ({e.ProcessFailedKind}, {e.Reason})");
+        Diary.Log($"{Screen.DeviceName}: browser part crashed ({e.ProcessFailedKind}, {e.Reason})");
         if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.BrowserProcessExited)
         {
             BeginInvoke(new Action(() => BrowserDied?.Invoke(this, e.ProcessFailedKind.ToString())));
@@ -179,7 +179,7 @@ internal sealed class WallpaperWindow : Form
         if ((DateTime.Now - _lastReload).TotalSeconds < 10) return;   // don't reload-loop
         _lastReload = DateTime.Now;
         _lastBeat = -1; _staleChecks = 0;
-        Events.Log($"{Screen.DeviceName}: reloading wallpaper ({why})");
+        Diary.Log($"{Screen.DeviceName}: reloading wallpaper ({why})");
         try
         {
             if (_path != null) Navigate(_path); else _web.CoreWebView2.Reload();
