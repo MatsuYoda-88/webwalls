@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- 1. The name that shows up in the web.walls menu -->
+<title>My First Wallpaper</title>
+<style>
+  /* Fill the whole screen, black background, no scrollbars */
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/* ============================================================
+   web.walls starter wallpaper: floating neon bubbles on black.
+   Copy this file, change the bits marked "CHANGE ME", and load it
+   in web.walls with: tray icon > Wallpapers > Load my own HTML...
+   Tip: open it in Chrome or Edge first to see it while you edit.
+   ============================================================ */
+
+// ---- CHANGE ME: the look ----
+const COLORS = ['#ff2fd0', '#22e6ff', '#8a5cff', '#ffd36a'];  // neon colours
+const BUBBLES_PER_1000PX = 14;   // how many bubbles (more on wider screens)
+const SPEED = 1;                 // 0.5 = chill, 2 = full send
+
+const c = document.getElementById('c');
+const x = c.getContext('2d');
+let W, H, dpr, bubbles = [];
+
+// Size the canvas to the screen's REAL pixels so it's sharp on 4K / 8K / 5120x1440.
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = c.width = Math.round(innerWidth * dpr);
+  H = c.height = Math.round(innerHeight * dpr);
+  // More bubbles on wide screens (32:9 gets lots), fewer on a phone or portrait screen.
+  const count = Math.round(innerWidth / 1000 * BUBBLES_PER_1000PX) + 6;
+  bubbles = Array.from({ length: count }, makeBubble);
+}
+
+function makeBubble() {
+  return {
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: (20 + Math.random() * 70) * dpr,            // size
+    vx: (Math.random() - 0.5) * 0.3 * dpr,         // drift sideways
+    vy: -(0.15 + Math.random() * 0.4) * dpr,       // float up
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    phase: Math.random() * Math.PI * 2,
+  };
+}
+
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  // Move by TIME, not by frames, so it's the same speed at 30, 60 or 240 FPS.
+  const dt = Math.min((now - last) / 16.67, 4) * SPEED;
+  last = now;
+
+  x.fillStyle = '#000';                 // pure black = OLED pixels fully off
+  x.fillRect(0, 0, W, H);
+  x.globalCompositeOperation = 'lighter';   // glowing colours add up where they overlap
+
+  for (const b of bubbles) {
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    if (b.y < -b.r) { Object.assign(b, makeBubble(), { y: H + b.r }); }   // wrap to the bottom
+    const pulse = 0.75 + 0.25 * Math.sin(now / 900 + b.phase);
+    const g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+    g.addColorStop(0, b.color);
+    g.addColorStop(1, 'transparent');
+    x.globalAlpha = 0.55 * pulse;
+    x.fillStyle = g;
+    x.beginPath(); x.arc(b.x, b.y, b.r, 0, Math.PI * 2); x.fill();
+  }
+  x.globalAlpha = 1;
+  x.globalCompositeOperation = 'source-over';
+}
+
+addEventListener('resize', resize);
+resize();
+requestAnimationFrame(frame);
+
+// ---- Optional extras web.walls gives you (safe to delete) ----
+// Which screen am I on? shape is 'superultrawide' (32:9), 'ultrawide' (21:9), 'wide' or 'portrait'.
+if (window.__webwalls && window.__webwalls.screen) {
+  console.log('web.walls screen:', window.__webwalls.screen.shape);
+}
+// web.walls tells you when it pauses (you don't have to do anything, it already stops the animation).
+addEventListener('webwalls', e => console.log('paused?', e.detail.paused, 'fps cap', e.detail.fps));
+</script>
+</body>
+</html>

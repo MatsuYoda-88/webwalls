@@ -28,6 +28,9 @@ Four new GPU wallpapers built to show off high-res OLEDs. They render at your sc
 - **Super-ultrawide 32:9 support** (5120×1440 / 3840×1080, e.g. Samsung Odyssey OLED G9): every scene reflows to fill the full width. Wallpapers get a `ww-superultrawide` class (plus `ww-ultrawide`) to tune for it.
 - **High-refresh frame rates:** *Performance → Frame rate* now has 240 / 144 / 120 FPS, and *Unlimited* matches your screen's refresh rate.
 
+## Make your own
+Every wallpaper is just a web page. **[How to add your own wallpapers](https://github.com/MatsuYoda-88/webwalls/blob/main/docs/ADD-WALLPAPERS.md)**: load ones friends send you, add them to the list, or make your own (there's a starter and a ready-made AI prompt).
+
 ## What's in it
 - 12 animated wallpapers: Event Horizon, Abyss, Prairie Fireflies, Fractal Dive (new in v0.8), Neon Galaxy (new in v0.6, OLED-tuned), Neon Highway, Midnight Rain City, Aurora Lake, Baldwin's Crusade, and the Montgisard trilogy
 - Works on every monitor: 32:9 super-ultrawide, ultrawide, 16:9 and portrait screens all get their own properly fitted copy
