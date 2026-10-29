@@ -11,14 +11,18 @@ internal static class DesktopHost
 {
     public sealed record Target(IntPtr Parent, IntPtr InsertAfter, bool Raised);
 
-    public static Target? Find()
+    /// <param name="spawn">false = just look (used by the health check every few seconds), don't poke Explorer.</param>
+    public static Target? Find(bool spawn = true)
     {
         IntPtr progman = Native.FindWindow("Progman", null);
         if (progman == IntPtr.Zero) return null;
 
-        // Ask Progman to spawn the WorkerW layer behind the icons (undocumented but used by everyone).
-        Native.SendMessageTimeout(progman, 0x052C, new IntPtr(0xD), new IntPtr(0x1), Native.SMTO_NORMAL, 1000, out _);
-        Native.SendMessageTimeout(progman, 0x052C, IntPtr.Zero, IntPtr.Zero, Native.SMTO_NORMAL, 1000, out _);
+        if (spawn)
+        {
+            // Ask Progman to spawn the WorkerW layer behind the icons (undocumented but used by everyone).
+            Native.SendMessageTimeout(progman, 0x052C, new IntPtr(0xD), new IntPtr(0x1), Native.SMTO_NORMAL, 1000, out _);
+            Native.SendMessageTimeout(progman, 0x052C, IntPtr.Zero, IntPtr.Zero, Native.SMTO_NORMAL, 1000, out _);
+        }
 
         // --- Windows 11 24H2 and newer: icons view + WorkerW are both children of Progman ---
         IntPtr defViewInProgman = Native.FindWindowEx(progman, IntPtr.Zero, "SHELLDLL_DefView", null);
@@ -76,6 +80,29 @@ internal static class DesktopHost
         if (target.InsertAfter == IntPtr.Zero) flags |= Native.SWP_NOZORDER;
         Native.SetWindowPos(hwnd, target.InsertAfter, x, y, screenBounds.Width, screenBounds.Height, flags);
         return true;
+    }
+
+    /// <summary>
+    /// Is our window still glued in the right spot? Windows quietly rebuilds the desktop layers on theme or
+    /// wallpaper changes, sleep/wake, monitors waking up, Spotlight, etc. When that happens our window ends up
+    /// orphaned or hidden and the stock wallpaper shows through. Returns a reason string if it needs re-gluing.
+    /// </summary>
+    public static string? Check(IntPtr hwnd)
+    {
+        IntPtr parent = Native.GetParent(hwnd);
+        if (parent == IntPtr.Zero || !Native.IsWindow(parent)) return "parent gone";
+        if (!Native.IsWindowVisible(parent)) return "parent hidden";
+        if (!Native.IsWindowVisible(hwnd)) return "window hidden";
+        var t = Find(spawn: false);
+        if (t == null) return null;                          // Explorer mid-restart: leave it, ShellWatcher handles it
+        if (t.Parent != parent) return "layer moved";
+        if (t.Raised && t.InsertAfter != IntPtr.Zero)
+        {
+            // 24H2+: keep us slotted right under the icons (cheap, no move/resize, no flicker).
+            Native.SetWindowPos(hwnd, t.InsertAfter, 0, 0, 0, 0,
+                Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
+        }
+        return null;
     }
 
     /// <summary>Repaint the normal Windows wallpaper (used when we quit so the desktop isn't left black).</summary>

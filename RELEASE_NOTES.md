@@ -5,6 +5,11 @@
 
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
+## New in v0.8.1: self-healing
+- **No more falling back to the Windows wallpaper.** Every 3 seconds web.walls checks it's still glued behind your icons, and re-glues if Windows knocked it loose (theme or wallpaper changes, sleep/wake, unlocking, monitors waking up, Spotlight).
+- **No more frozen or black wallpapers.** If the browser's graphics or page process crashes or hangs, or a GPU scene loses the graphics card (driver reset, eGPU hiccup), the wallpaper reloads itself. If the whole browser dies, the screens are rebuilt.
+- What it fixed and when goes in `%APPDATA%\WebWalls\events.log`.
+
 ## New in v0.8: OLED showcase scenes
 Four new GPU wallpapers built to show off high-res OLEDs. They render at your screen's exact pixels, up to 8K, run smooth at up to 240 Hz, and empty space is true black (pixels off):
 - **Event Horizon**: a ray-traced black hole bending a blazing accretion disk and the starfield around it

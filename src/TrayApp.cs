@@ -11,6 +11,9 @@ internal sealed class TrayApp : ApplicationContext
     private readonly NotifyIcon _tray = new();
     private readonly List<WallpaperWindow> _windows = new();
     private readonly System.Windows.Forms.Timer _watchdog = new() { Interval = 1500 };
+    // Self-healing: re-glue anything Windows knocked loose, reload anything that died.
+    private readonly System.Windows.Forms.Timer _health = new() { Interval = 3000 };
+    private int _healthTicks;
     // Plugging in a monitor or rotating the laptop fires a burst of display events: wait for it to settle.
     private readonly System.Windows.Forms.Timer _displayDebounce = new() { Interval = 1200 };
     private string _layoutSig = "";
@@ -58,7 +61,24 @@ internal sealed class TrayApp : ApplicationContext
             else foreach (var w in _windows) w.Reattach();                // same layout, just re-glue
         };
         if (StartupEnabled) StartupEnabled = true;   // re-point "Start with Windows" at this exe if it moved
-        SystemEvents.PowerModeChanged += (_, _) => _ui.BeginInvoke(new Action(async () => await EvaluateAsync(force: true)));
+        SystemEvents.PowerModeChanged += (_, e) => _ui.BeginInvoke(new Action(async () =>
+        {
+            await EvaluateAsync(force: true);
+            if (e.Mode == PowerModes.Resume) await HealSoonAsync("woke from sleep");
+        }));
+        // Theme / wallpaper / Spotlight changes make Windows rebuild the desktop layers.
+        SystemEvents.UserPreferenceChanged += (_, e) =>
+        {
+            if (e.Category is UserPreferenceCategory.Desktop or UserPreferenceCategory.General or UserPreferenceCategory.VisualStyle)
+                _ui.BeginInvoke(new Action(async () => await HealSoonAsync("theme/wallpaper changed")));
+        };
+        SystemEvents.SessionSwitch += (_, e) =>
+        {
+            if (e.Reason is SessionSwitchReason.SessionUnlock or SessionSwitchReason.ConsoleConnect or SessionSwitchReason.RemoteConnect)
+                _ui.BeginInvoke(new Action(async () => await HealSoonAsync("unlocked")));
+        };
+        _health.Tick += async (_, _) => await HealthTickAsync();
+        _health.Start();
 
         // Installer / uninstaller asks us to leave ("WebWalls.exe --quit").
         ThreadPool.RegisterWaitForSingleObject(_quitEvent, (_, _) => _ui.BeginInvoke(new Action(ExitApp)), null, -1, true);
@@ -114,6 +134,7 @@ internal sealed class TrayApp : ApplicationContext
             var screen = screens[i];
             if (!IsShown(screen)) continue;
             var w = new WallpaperWindow(screen, i, screens.Length);
+            w.BrowserDied += OnBrowserDied;
             w.SetMuted(_settings.Muted);
             w.LoadWallpaper(path);
             _windows.Add(w);
@@ -151,6 +172,43 @@ internal sealed class TrayApp : ApplicationContext
         foreach (var w in _windows) w.LoadWallpaper(path);
         _lastSig = null;
         await EvaluateAsync(force: true);
+    }
+
+    // ---------------------------------------------------------------- self-healing
+
+    private async Task HealSoonAsync(string why)
+    {
+        // Windows takes a moment to finish rebuilding the desktop; check a few times as it settles.
+        foreach (int ms in new[] { 700, 2000, 5000 })
+        {
+            await Task.Delay(ms);
+            HealAttachment(why);
+        }
+    }
+
+    private void HealAttachment(string why)
+    {
+        if (_rebuilding) return;
+        foreach (var w in _windows.ToList())
+        {
+            string? what = w.EnsureAttached();
+            if (what != null) Events.Log($"{w.Screen.DeviceName}: re-glued behind icons ({what}; {why})");
+        }
+    }
+
+    private async Task HealthTickAsync()
+    {
+        if (_rebuilding || _windows.Count == 0) return;
+        HealAttachment("check");
+        // Page heartbeat every ~10 s.
+        if (++_healthTicks % 3 != 0) return;
+        foreach (var w in _windows.ToList()) await w.CheckHealthAsync();
+    }
+
+    private void OnBrowserDied(WallpaperWindow w, string why)
+    {
+        Events.Log($"{w.Screen.DeviceName}: browser died ({why}), rebuilding");
+        _ = RebuildWindowsAsync();
     }
 
     // ---------------------------------------------------------------- pause brain

@@ -41,6 +41,16 @@ internal sealed class WallpaperWindow : Form
             try { document.getAnimations().forEach(a => paused ? a.pause() : a.play()); } catch (e) {}
             window.dispatchEvent(new CustomEvent('webwalls', { detail: { paused, fps, scale: st.scale } }));
           };
+          // Heartbeat for the app's health check: keeps ticking even when the page is throttled,
+          // so it only stops if the page itself has hung or crashed.
+          st.beat = 0; setInterval(() => { st.beat++; }, 1000);
+          // If a WebGL wallpaper loses its GPU (driver reset, eGPU hiccup) and doesn't get it back
+          // within 4 s, reload the page instead of sitting there black.
+          let lostTimer = 0;
+          document.addEventListener('webglcontextlost', () => {
+            clearTimeout(lostTimer); lostTimer = setTimeout(() => location.reload(), 4000);
+          }, true);
+          document.addEventListener('webglcontextrestored', () => { clearTimeout(lostTimer); }, true);
           window.__webwalls = st;
         })();
         """;
@@ -55,6 +65,15 @@ internal sealed class WallpaperWindow : Form
     private double _scale = 1;
 
     public Screen Screen { get; }
+
+    /// <summary>The whole browser died: the window has to be rebuilt from scratch.</summary>
+    public event Action<WallpaperWindow, string>? BrowserDied;
+
+    private long _lastBeat = -1;
+    private int _staleChecks;
+    private DateTime _lastReload = DateTime.MinValue;
+    private bool _checking;
+    private DateTime _lastReattach = DateTime.MinValue;
 
     private readonly string _screenInfo;
 
@@ -119,7 +138,8 @@ internal sealed class WallpaperWindow : Form
         core.Settings.AreBrowserAcceleratorKeysEnabled = false;
         core.IsMuted = _muted;
         core.NewWindowRequested += (_, e) => e.Handled = true; // no popups on the desktop, ever
-        core.NavigationCompleted += async (_, _) => await PushStateAsync();
+        core.NavigationCompleted += async (_, _) => { _lastBeat = -1; _staleChecks = 0; await PushStateAsync(); };
+        core.ProcessFailed += OnProcessFailed;
         await core.AddScriptToExecuteOnDocumentCreatedAsync(Shim);
         await core.AddScriptToExecuteOnDocumentCreatedAsync(_screenInfo);
 
@@ -128,6 +148,69 @@ internal sealed class WallpaperWindow : Form
 
     /// <summary>Re-glue after Explorer restarts or the screen layout changes.</summary>
     public void Reattach() => DesktopHost.Attach(Handle, _bounds);
+
+    /// <summary>Still glued behind the icons? If not, re-glue. Returns what was wrong (for the log), or null.</summary>
+    public string? EnsureAttached()
+    {
+        if (IsDisposed || !IsHandleCreated) return null;
+        string? why = DesktopHost.Check(Handle);
+        if (why == null) return null;
+        if ((DateTime.Now - _lastReattach).TotalSeconds < 5) return null;   // never thrash
+        _lastReattach = DateTime.Now;
+        Reattach();
+        return why;
+    }
+
+    private void OnProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
+    {
+        Events.Log($"{Screen.DeviceName}: browser part crashed ({e.ProcessFailedKind}, {e.Reason})");
+        if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.BrowserProcessExited)
+        {
+            BeginInvoke(new Action(() => BrowserDied?.Invoke(this, e.ProcessFailedKind.ToString())));
+            return;
+        }
+        // Renderer / GPU / frame crashed or hung: the browser itself is fine, so a reload brings it back.
+        BeginInvoke(new Action(async () => { await Task.Delay(800); SafeReload("crash: " + e.ProcessFailedKind); }));
+    }
+
+    private void SafeReload(string why)
+    {
+        if (_web.CoreWebView2 == null || _deepPaused) return;
+        if ((DateTime.Now - _lastReload).TotalSeconds < 10) return;   // don't reload-loop
+        _lastReload = DateTime.Now;
+        _lastBeat = -1; _staleChecks = 0;
+        Events.Log($"{Screen.DeviceName}: reloading wallpaper ({why})");
+        try
+        {
+            if (_path != null) Navigate(_path); else _web.CoreWebView2.Reload();
+        }
+        catch { BrowserDied?.Invoke(this, "reload failed"); }
+    }
+
+    /// <summary>
+    /// Is the page alive? Reads the heartbeat; if it's stopped for ~20 s (or the page won't even answer),
+    /// reload it. Skipped while the browser is deliberately asleep.
+    /// </summary>
+    public async Task CheckHealthAsync()
+    {
+        if (_checking || _deepPaused || _web.CoreWebView2 == null || _path == null) return;
+        _checking = true;
+        try
+        {
+            var task = _web.CoreWebView2.ExecuteScriptAsync("window.__webwalls ? window.__webwalls.beat : -1");
+            if (await Task.WhenAny(task, Task.Delay(5000)) != task) { _staleChecks += 2; }
+            else
+            {
+                long beat = long.TryParse(task.Result, out var b) ? b : -1;
+                if (beat >= 0 && beat == _lastBeat) _staleChecks++;
+                else _staleChecks = 0;
+                _lastBeat = beat;
+            }
+            if (_staleChecks >= 2) SafeReload("page stopped responding");
+        }
+        catch { _staleChecks++; }
+        finally { _checking = false; }
+    }
 
     public void LoadWallpaper(string path)
     {

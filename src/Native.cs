@@ -24,6 +24,8 @@ internal static class Native
     public const uint SWP_SHOWWINDOW = 0x0040;
     public const uint SWP_NOZORDER = 0x0004;
     public const uint SWP_FRAMECHANGED = 0x0020;
+    public const uint SWP_NOMOVE = 0x0002;
+    public const uint SWP_NOSIZE = 0x0001;
 
     public const uint LWA_ALPHA = 0x2;
     public const uint SMTO_NORMAL = 0x0000;
@@ -84,6 +86,13 @@ internal static class Native
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetParent(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindow(IntPtr hWnd);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
