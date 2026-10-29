@@ -12,7 +12,7 @@ internal sealed class TrayApp : ApplicationContext
     private readonly List<WallpaperWindow> _windows = new();
     private readonly System.Windows.Forms.Timer _watchdog = new() { Interval = 1500 };
     // Self-healing: re-glue anything Windows knocked loose, reload anything that died.
-    private readonly System.Windows.Forms.Timer _health = new() { Interval = 3000 };
+    private readonly System.Windows.Forms.Timer _health = new() { Interval = 5000 };
     private int _healthTicks;
     // Plugging in a monitor or rotating the laptop fires a burst of display events: wait for it to settle.
     private readonly System.Windows.Forms.Timer _displayDebounce = new() { Interval = 1200 };
@@ -69,7 +69,7 @@ internal sealed class TrayApp : ApplicationContext
         // Theme / wallpaper / Spotlight changes make Windows rebuild the desktop layers.
         SystemEvents.UserPreferenceChanged += (_, e) =>
         {
-            if (e.Category is UserPreferenceCategory.Desktop or UserPreferenceCategory.General or UserPreferenceCategory.VisualStyle)
+            if (e.Category is UserPreferenceCategory.Desktop or UserPreferenceCategory.VisualStyle)
                 _ui.BeginInvoke(new Action(async () => await HealSoonAsync("theme/wallpaper changed")));
         };
         SystemEvents.SessionSwitch += (_, e) =>
@@ -200,8 +200,8 @@ internal sealed class TrayApp : ApplicationContext
     {
         if (_rebuilding || _windows.Count == 0) return;
         HealAttachment("check");
-        // Page heartbeat every ~10 s.
-        if (++_healthTicks % 3 != 0) return;
+        // Page heartbeat every ~20 s.
+        if (++_healthTicks % 4 != 0) return;
         foreach (var w in _windows.ToList()) await w.CheckHealthAsync();
     }
 
@@ -308,6 +308,12 @@ internal sealed class TrayApp : ApplicationContext
         menu.Items.Add(BuildDisplaysMenu());
         menu.Items.Add(new ToolStripMenuItem(_manualPause ? "Resume" : "Pause", null, (_, _) => TogglePause()));
         menu.Items.Add("Reload wallpaper", null, (_, _) => { foreach (var w in _windows) w.Reload(); });
+        menu.Items.Add("Show fix log", null, (_, _) =>
+        {
+            string log = Path.Combine(Settings.Folder, "events.log");
+            if (!File.Exists(log)) { Directory.CreateDirectory(Settings.Folder); File.WriteAllText(log, "Nothing fixed yet.\n"); }
+            System.Diagnostics.Process.Start("notepad.exe", log);
+        });
         menu.Items.Add(new ToolStripSeparator());
 
         // Performance

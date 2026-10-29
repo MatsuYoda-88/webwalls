@@ -74,6 +74,7 @@ internal sealed class WallpaperWindow : Form
     private DateTime _lastReload = DateTime.MinValue;
     private bool _checking;
     private DateTime _lastReattach = DateTime.MinValue;
+    private int _suspect;
 
     private readonly string _screenInfo;
 
@@ -154,8 +155,11 @@ internal sealed class WallpaperWindow : Form
     {
         if (IsDisposed || !IsHandleCreated) return null;
         string? why = DesktopHost.Check(Handle);
-        if (why == null) return null;
-        if ((DateTime.Now - _lastReattach).TotalSeconds < 5) return null;   // never thrash
+        if (why == null) { _suspect = 0; return null; }
+        // "layer moved" can be a blink while Explorer shuffles things: only act if it's still true next check.
+        if (why == "layer moved" && ++_suspect < 2) return null;
+        _suspect = 0;
+        if ((DateTime.Now - _lastReattach).TotalSeconds < 15) return null;   // never thrash
         _lastReattach = DateTime.Now;
         Reattach();
         return why;
@@ -176,7 +180,7 @@ internal sealed class WallpaperWindow : Form
     private void SafeReload(string why)
     {
         if (_web.CoreWebView2 == null || _deepPaused) return;
-        if ((DateTime.Now - _lastReload).TotalSeconds < 10) return;   // don't reload-loop
+        if ((DateTime.Now - _lastReload).TotalSeconds < 120) return;   // never reload-loop
         _lastReload = DateTime.Now;
         _lastBeat = -1; _staleChecks = 0;
         Diary.Log($"{Screen.DeviceName}: reloading wallpaper ({why})");
@@ -197,16 +201,20 @@ internal sealed class WallpaperWindow : Form
         _checking = true;
         try
         {
-            var task = _web.CoreWebView2.ExecuteScriptAsync("window.__webwalls ? window.__webwalls.beat : -1");
-            if (await Task.WhenAny(task, Task.Delay(5000)) != task) { _staleChecks += 2; }
+            // -2 = page is hidden/covered (timers are throttled on purpose then, so it's not a hang).
+            var task = _web.CoreWebView2.ExecuteScriptAsync(
+                "window.__webwalls ? (document.hidden ? -2 : window.__webwalls.beat) : -1");
+            if (await Task.WhenAny(task, Task.Delay(8000)) != task) { _staleChecks++; }
             else
             {
                 long beat = long.TryParse(task.Result, out var b) ? b : -1;
-                if (beat >= 0 && beat == _lastBeat) _staleChecks++;
+                if (beat == -2 || beat == -1) { _staleChecks = 0; _lastBeat = -1; }
+                else if (beat == _lastBeat) _staleChecks++;
                 else _staleChecks = 0;
-                _lastBeat = beat;
+                if (beat >= 0) _lastBeat = beat;
             }
-            if (_staleChecks >= 2) SafeReload("page stopped responding");
+            // Needs ~1 minute of no heartbeat while visible before we pull the trigger.
+            if (_staleChecks >= 3) SafeReload("page stopped responding");
         }
         catch { _staleChecks++; }
         finally { _checking = false; }

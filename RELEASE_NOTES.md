@@ -5,6 +5,10 @@
 
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
+## New in v0.8.2: smooth again
+- Fixed lag from 0.8.1's self-healing: it was reloading wallpapers that were only *covered* (Windows slows covered pages on purpose), and nudging the desktop every 3 s. Checks are now look-only, every 5 s, and a reload needs a full minute of a visible wallpaper being truly stuck.
+- New tray item **Show fix log** opens the list of everything web.walls fixed on its own.
+
 ## New in v0.8.1: self-healing
 - **No more falling back to the Windows wallpaper.** Every 3 seconds web.walls checks it's still glued behind your icons, and re-glues if Windows knocked it loose (theme or wallpaper changes, sleep/wake, unlocking, monitors waking up, Spotlight).
 - **No more frozen or black wallpapers.** If the browser's graphics or page process crashes or hangs, or a GPU scene loses the graphics card (driver reset, eGPU hiccup), the wallpaper reloads itself. If the whole browser dies, the screens are rebuilt.

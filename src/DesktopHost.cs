@@ -96,13 +96,7 @@ internal static class DesktopHost
         var t = Find(spawn: false);
         if (t == null) return null;                          // Explorer mid-restart: leave it, ShellWatcher handles it
         if (t.Parent != parent) return "layer moved";
-        if (t.Raised && t.InsertAfter != IntPtr.Zero)
-        {
-            // 24H2+: keep us slotted right under the icons (cheap, no move/resize, no flicker).
-            Native.SetWindowPos(hwnd, t.InsertAfter, 0, 0, 0, 0,
-                Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
-        }
-        return null;
+        return null;   // look only: never nudge windows here, that makes the desktop redraw (= stutter)
     }
 
     /// <summary>Repaint the normal Windows wallpaper (used when we quit so the desktop isn't left black).</summary>

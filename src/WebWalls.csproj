@@ -9,7 +9,7 @@
     <AssemblyName>WebWalls</AssemblyName>
     <RootNamespace>WebWalls</RootNamespace>
     <Product>web.walls for Windows</Product>
-    <Version>0.8.1</Version>
+    <Version>0.8.2</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationIcon>assets\webwalls.ico</ApplicationIcon>
     <!-- lets you build from Linux/CI too -->
