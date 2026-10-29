@@ -60,7 +60,9 @@ internal sealed class TrayApp : ApplicationContext
             if (_pendingRebuild || LayoutSig() != _layoutSig) { _pendingRebuild = false; await RebuildWindowsAsync(); }   // monitor added/removed/rotated/resized
             else foreach (var w in _windows) w.Reattach();                // same layout, just re-glue
         };
-        if (StartupEnabled) StartupEnabled = true;   // re-point "Start with Windows" at this exe if it moved
+        // Start with Windows: the app's own setting is the boss. Every launch, put the startup entry back if
+        // something removed it (an old installer choice, a cleanup tool, Task Manager) and point it at this exe.
+        EnsureStartup();
         SystemEvents.PowerModeChanged += (_, e) => _ui.BeginInvoke(new Action(async () =>
         {
             await EvaluateAsync(force: true);
@@ -89,6 +91,7 @@ internal sealed class TrayApp : ApplicationContext
         _ui.BeginInvoke(new Action(async () =>
         {
             await RebuildWindowsAsync();
+            _settings.Save();   // writes StartWithWindows=true into older settings files
             if (_settings.CurrentWallpaper == null)
                 _tray.ShowBalloonTip(4000, "web.walls is running",
                     "Right-click the tray icon to pick a wallpaper.", ToolTipIcon.Info);
@@ -343,7 +346,11 @@ internal sealed class TrayApp : ApplicationContext
         }));
         menu.Items.Add(perf);
 
-        menu.Items.Add(Check("Start with Windows", StartupEnabled, () => StartupEnabled = !StartupEnabled));
+        menu.Items.Add(Check("Start with Windows", _settings.StartWithWindows, () =>
+        {
+            _settings.StartWithWindows = !_settings.StartWithWindows;
+            EnsureStartup();
+        }));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quit", null, (_, _) => ExitApp());
     }
@@ -442,19 +449,35 @@ internal sealed class TrayApp : ApplicationContext
 
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
-    private static bool StartupEnabled
+    // Task Manager's Startup tab on/off switch lives here (first byte 2 = on, 3 = off).
+    private const string ApprovedKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+
+    private void EnsureStartup()
     {
-        get
+        try
         {
-            using var k = Registry.CurrentUser.OpenSubKey(RunKey);
-            return k?.GetValue("WebWalls") != null;
+            using var run = Registry.CurrentUser.CreateSubKey(RunKey);
+            using var ok = Registry.CurrentUser.CreateSubKey(ApprovedKey);
+            if (_settings.StartWithWindows)
+            {
+                string want = $"\"{Environment.ProcessPath}\"";
+                if (!string.Equals(run.GetValue("WebWalls") as string, want, StringComparison.OrdinalIgnoreCase))
+                {
+                    run.SetValue("WebWalls", want);
+                    Diary.Log("start with Windows: startup entry was missing or stale, put it back");
+                }
+                if (ok.GetValue("WebWalls") is byte[] b && b.Length > 0 && b[0] % 2 == 1)   // switched off in Task Manager
+                {
+                    ok.SetValue("WebWalls", new byte[12] { 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, RegistryValueKind.Binary);
+                    Diary.Log("start with Windows: was switched off in Task Manager, switched it back on");
+                }
+            }
+            else
+            {
+                run.DeleteValue("WebWalls", false);
+            }
         }
-        set
-        {
-            using var k = Registry.CurrentUser.CreateSubKey(RunKey);
-            if (value) k.SetValue("WebWalls", $"\"{Environment.ProcessPath}\"");
-            else k.DeleteValue("WebWalls", false);
-        }
+        catch (Exception ex) { Diary.Log("start with Windows: couldn't set it (" + ex.Message + ")"); }
     }
 
     private void ExitApp()

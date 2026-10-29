@@ -5,6 +5,10 @@
 
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
+## New in v0.8.3: starts with Windows again
+- Fixed "Start with Windows" quietly staying off after updating. The installer was remembering an old unticked box from v0.7.0.
+- web.walls now keeps its own startup entry healthy: every launch it puts it back if an update, a cleanup tool or Task Manager switched it off. To really turn it off, untick **Start with Windows** in the web.walls tray menu.
+
 ## New in v0.8.2: smooth again
 - Fixed lag from 0.8.1's self-healing: it was reloading wallpapers that were only *covered* (Windows slows covered pages on purpose), and nudging the desktop every 3 s. Checks are now look-only, every 5 s, and a reload needs a full minute of a visible wallpaper being truly stuck.
 - New tray item **Show fix log** opens the list of everything web.walls fixed on its own.

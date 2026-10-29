@@ -30,6 +30,8 @@ Compression=lzma2/normal
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=no
+; Always show the default ticks (don't remember an old unticked 'Start with Windows' from a previous install)
+UsePreviousTasks=no
 RestartApplications=no
 
 [Messages]

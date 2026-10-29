@@ -23,6 +23,8 @@ public sealed class Settings
     public GamingMode WhileGaming { get; set; } = GamingMode.Lighter;
     /// <summary>Exe names you told web.walls are games (for windowed games it can't recognise on its own).</summary>
     public List<string> GameExes { get; set; } = new();
+    /// <summary>Start with Windows. On by default; web.walls re-checks it every launch so updates or cleanup tools can't quietly switch it off.</summary>
+    public bool StartWithWindows { get; set; } = true;
 
     public static string Folder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WebWalls");

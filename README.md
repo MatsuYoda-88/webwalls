@@ -90,6 +90,7 @@ Every wallpaper is just a web page. If it runs in Chrome, it runs on your deskto
 
 ## What's new
 
+- **v0.8.3**: Start with Windows works again after updates, and stays on.
 - **v0.8.2**: smoother; fixed lag from 0.8.1's self-healing checks. New *Show fix log* tray item.
 - **v0.8.1**: self-healing: stays glued behind your icons and reloads crashed wallpapers on its own.
 - **v0.8.0**: four OLED showcase scenes (Event Horizon, Abyss, Prairie Fireflies, Fractal Dive), up to 8K and 240 Hz.
