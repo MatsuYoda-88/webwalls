@@ -33,7 +33,7 @@ const FS = `
 precision highp float;
 uniform vec2 R; uniform float T;
 #define TAU 6.2831853
-float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float h21(vec2 p){ vec3 q=fract(vec3(p.xyx)*.1031); q+=dot(q,q.yzx+33.33); return fract((q.x+q.y)*q.z); }
 vec2  h22(vec2 p){ float n=h21(p); return vec2(n,h21(p+n+3.7)); }
 float vn(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.-2.*f);
   return mix(mix(h21(i),h21(i+vec2(1,0)),u.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x),u.y); }
@@ -156,14 +156,23 @@ function adapt(dt) {
   if (slow > 60 && scale > USER_SCALE * 0.6) { scale *= 0.92; slow = 0; apply(); }
 }
 
-const t0 = performance.now(), seed = (Date.now() / 1000) % 3600;
+// Scene clock loops every 30 min. Graphics cards round big numbers, so a clock that just keeps counting
+// makes long-running scenes stutter and grow stripes after a few hours. At the loop point the screen
+// dips to black for a moment so the jump is never seen.
+const LOOP = 1800, DIP = 0.8;
+const t0 = performance.now(), seed = (Date.now() / 1000) % LOOP;
+let dipped = false;
 let raf = 0;
 function frame(now) {
   raf = requestAnimationFrame(frame);
   if (last) adapt(now - last);
   last = now;
   gl.uniform2f(uR, c.width, c.height);
-  gl.uniform1f(uT, (now - t0) / 1000 + seed);
+  const tt = (((now - t0) / 1000 + seed) % LOOP + LOOP) % LOOP;
+  const edge = Math.min(tt, LOOP - tt);
+  const op = Math.max(0, Math.min(1, edge / DIP));
+  if (op < 1 || dipped) { c.style.opacity = op.toFixed(3); dipped = op < 1; }
+  gl.uniform1f(uT, tt + 10);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 document.addEventListener('visibilitychange', () => {

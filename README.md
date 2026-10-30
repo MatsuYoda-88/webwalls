@@ -22,7 +22,7 @@ Grab **WebWalls-Setup-x.y.z.exe** under *Assets*, run it, done. No admin needed.
 
 | | |
 |---|---|
-| **Event Horizon** (new)<br>A real ray-traced black hole. Its gravity bends the glowing disk over the top and under the shadow, and warps the stars behind it. | **Abyss** (new)<br>Neon jellyfish pulsing up through the deep sea, trailing hair-thin tentacles through glowing plankton. |
+| **Event Horizon** (new)<br>A real ray-traced black hole. Its gravity bends the glowing disk over the top and under the shadow, and warps the stars behind it. | **Abyss** (new)<br>Neon jellyfish swimming in pulses through the deep sea, wandering and tilting as they go, trailing glowing tentacles through plankton. |
 | ![Event Horizon](docs/event-horizon.jpg) | ![Abyss](docs/abyss.jpg) |
 | **Prairie Fireflies** (new)<br>Thousands of fireflies blinking over dark grass under the Milky Way. | **Fractal Dive** (new)<br>Endless dives into the Mandelbrot set, drawn as razor-thin neon lines. Gets more detailed the higher your resolution. |
 | ![Prairie Fireflies](docs/prairie-fireflies.jpg) | ![Fractal Dive](docs/fractal-dive.jpg) |
@@ -90,6 +90,7 @@ Every wallpaper is just a web page. If it runs in Chrome, it runs on your deskto
 
 ## What's new
 
+- **v0.8.4**: Abyss jellies swim, wander and glow in neon; GPU scenes stay crisp no matter how long the PC's been on.
 - **v0.8.3**: Start with Windows works again after updates, and stays on.
 - **v0.8.2**: smoother; fixed lag from 0.8.1's self-healing checks. New *Show fix log* tray item.
 - **v0.8.1**: self-healing: stays glued behind your icons and reloads crashed wallpapers on its own.

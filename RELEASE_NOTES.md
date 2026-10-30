@@ -5,6 +5,10 @@
 
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
+## New in v0.8.4: livelier jellies, no more glitching
+- **Abyss jellyfish come alive**: they swim in surges with each pulse, wander around the screen, tilt toward where they're heading, and their tentacles trail and curl behind them with light pulses running down. Vivid neon colours (hot pink, cyan, electric blue, violet, lime, orange), near and far jellies, and more of them on wide screens.
+- **Fixed the GPU scenes going stripy and choppy after the PC had been on for hours** (Event Horizon, Abyss, Prairie Fireflies, Fractal Dive, Neon Galaxy). Their clock now loops every 30 minutes with a quick dip to black, so they look as good on day 5 as after a fresh start.
+
 ## New in v0.8.3: starts with Windows again
 - Fixed "Start with Windows" quietly staying off after updating. The installer was remembering an old unticked box from v0.7.0.
 - web.walls now keeps its own startup entry healthy: every launch it puts it back if an update, a cleanup tool or Task Manager switched it off. To really turn it off, untick **Start with Windows** in the web.walls tray menu.

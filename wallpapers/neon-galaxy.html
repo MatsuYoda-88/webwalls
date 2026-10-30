@@ -31,7 +31,7 @@ precision highp float;
 uniform vec2 R; uniform float T;
 #define TAU 6.2831853
 
-float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float h21(vec2 p){ vec3 q=fract(vec3(p.xyx)*.1031); q+=dot(q,q.yzx+33.33); return fract((q.x+q.y)*q.z); }
 vec2  h22(vec2 p){ float n=h21(p); return vec2(n,h21(p+n+3.7)); }
 float noise(vec2 p){ vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
   return mix(mix(h21(i),h21(i+vec2(1,0)),u.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x),u.y); }
@@ -188,14 +188,17 @@ function adapt(dt) {
   if (slow > 45 && scale > USER_SCALE * 0.5) { scale *= 0.9; slow = 0; apply(); }
 }
 
-const t0 = performance.now();
+const t0 = performance.now(), LOOP = 1800, DIP = 0.8, seed = 0;   // clock loops every 30 min (see gen_oled.py)
+let dipped = false;
 let raf = 0;
 function frame(now) {
   raf = requestAnimationFrame(frame);
   if (last) adapt(now - last);
   last = now;
   gl.uniform2f(uR, c.width, c.height);
-  gl.uniform1f(uT, (now - t0) / 1000 + 37);
+  const tt = (((now - t0) / 1000) % LOOP + LOOP) % LOOP, edge = Math.min(tt, LOOP - tt), op = Math.max(0, Math.min(1, edge / DIP));
+  if (op < 1 || dipped) { c.style.opacity = op.toFixed(3); dipped = op < 1; }
+  gl.uniform1f(uT, tt + 37);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 document.addEventListener('visibilitychange', () => {
