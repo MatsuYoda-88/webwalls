@@ -90,6 +90,7 @@ Every wallpaper is just a web page. If it runs in Chrome, it runs on your deskto
 
 ## What's new
 
+- **v0.8.5**: jellyfish tentacles stay attached when they tilt.
 - **v0.8.4**: Abyss jellies swim, wander and glow in neon; GPU scenes stay crisp no matter how long the PC's been on.
 - **v0.8.3**: Start with Windows works again after updates, and stays on.
 - **v0.8.2**: smoother; fixed lag from 0.8.1's self-healing checks. New *Show fix log* tray item.

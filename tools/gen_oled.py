@@ -189,32 +189,37 @@ void main(){
       float spots=smoothstep(.75,1.,sin(e.x*9.+t*.7)*sin(e.y*7.-t*.5))*.25;
       col+=mix(c1,c2,.5+.5*e.y)*bright*(.12+ribs*smoothstep(-.2,.6,e.y)+core*glowPulse+spots);
     }
-    // ---- tentacles: follow the path the bell swam, so they trail and swish behind it
+    // ---- tentacles: each one is pinned to its own spot on the (tilted) rim of the bell, then hangs
+    //      down along the path the bell swam, so they trail behind but never come loose.
+    mat2 toWorld=rot(-ang);
     float tilt=sin(ang);
-    float rim=y0-.22*bh;
-    float s=rim-uv.y;
-    if(s>0.&&s<L){
-      float fade=pow(1.-s/L,1.3);
-      float lag=.4*s/max(sp,.005);                   // roughly when the bell was up here
-      float xPath=clamp(jx(lane,A,t-lag,fi)-x0,-s*.45,s*.45);   // trail behind, but never stick out sideways
-      float wave=pow(.5+.5*sin(s/sz*2.6-t*4.5+fi),6.); // light pulses running down
-      for(int k=0;k<8;k++){
-        float fk=float(k);
-        float xb=x0+bw*(-.85+1.7*fk/7.)*(1.-.35*squeeze)+tilt*s*.15;
-        float amp=(.16+.12*h21(vec2(fi,fk)))*s;
-        float xk=xb+xPath+sin(s/sz*1.3-t*(1.4+.4*h21(vec2(fk,fi)))+fk*1.7)*amp*.4;
-        float d=abs(uv.x-xk)/px;
-        vec3 tc=mix(c1,c2,s/L);
-        col+=tc*bright*fade*(exp(-d*d*.3)*(.85+1.1*wave)+exp(-d*.1)*.06);
+    for(int k=0;k<9;k++){
+      float fk=float(k);
+      bool arm=k==8;                                  // last one = the frilly oral arms in the middle
+      vec2 anc=vec2(x0,y0)+toWorld*vec2(arm?0.:bw*(-.82+1.64*fk/7.),-.18*bh);
+      float s=anc.y-uv.y;                            // how far below this tentacle's own anchor
+      float Lk=arm?L*.55:L*(.82+.18*h21(vec2(fi,fk+20.)));
+      if(s<-.06*sz||s>Lk) continue;
+      float sc=max(s,0.);
+      float fade=pow(1.-sc/Lk,1.3)*smoothstep(-.06*sz,.04*sz,s);   // tucks up under the bell
+      float lag=.4*sc/max(sp,.005);
+      float xPath=clamp(jx(lane,A,t-lag,fi)-x0,-sc*.45,sc*.45);
+      // near the bell, hang along the tilt (straight out of the rim), then relax to straight down
+      float lean=tilt*sc*.6*exp(-sc/(2.5*sz));
+      float grow=smoothstep(0.,1.5*sz,sc);             // wiggle starts small at the rim
+      if(arm){
+        float xa=anc.x+lean+xPath*.8+sin(sc/sz*.8-t*1.1+fi)*bw*.28*grow;
+        float wa=sz*.2*(1.-sc/Lk)+sz*.02;
+        float d=abs(uv.x-xa)/wa;
+        col+=c2*bright*.55*exp(-d*d*1.4)*(.55+.45*sin(sc/sz*9.-t*2.6))*fade;
+        continue;
       }
-      // frilly oral arms
-      float La=L*.55;
-      if(s<La){
-        float xa=x0+xPath*.8+sin(s/sz*.8-t*1.1+fi)*bw*.28;
-        float wa=sz*.2*(1.-s/La);
-        float d=abs(uv.x-xa)/max(wa,1e-4);
-        col+=c2*bright*.55*exp(-d*d*1.4)*(.55+.45*sin(s/sz*9.-t*2.6))*pow(1.-s/La,.7);
-      }
+      float amp=(.16+.12*h21(vec2(fi,fk)))*sc*grow;
+      float xk=anc.x+lean+xPath+sin(sc/sz*1.3-t*(1.4+.4*h21(vec2(fk,fi)))+fk*1.7)*amp*.4;
+      float d=abs(uv.x-xk)/px;
+      float wave=pow(.5+.5*sin(sc/sz*2.6-t*4.5+fi),6.);  // light pulses running down
+      vec3 tc=mix(c1,c2,sc/L);
+      col+=tc*bright*fade*(exp(-d*d*.3)*(.85+1.1*wave)+exp(-d*.1)*.06);
     }
   }
   col=col/(1.+col*.12);
