@@ -18,12 +18,14 @@ Grab **WebWalls-Setup-x.y.z.exe** under *Assets*, run it, done. No admin needed.
 
 ## The wallpapers
 
-12 built in. **New in v0.8:** four OLED showcase scenes. They're drawn live by your graphics card at your screen's exact resolution (up to 8K), so they're razor sharp, and empty space is true black, so OLED pixels switch fully off.
+13 built in. **New in v0.8:** four OLED showcase scenes. They're drawn live by your graphics card at your screen's exact resolution (up to 8K), so they're razor sharp, and empty space is true black, so OLED pixels switch fully off.
 
 | | |
 |---|---|
 | **Event Horizon** (new)<br>A real ray-traced black hole. Its gravity bends the glowing disk over the top and under the shadow, and warps the stars behind it. | **Abyss** (new)<br>Neon jellyfish swimming in pulses through the deep sea, wandering and tilting as they go, trailing glowing tentacles through plankton. |
 | ![Event Horizon](docs/event-horizon.jpg) | ![Abyss](docs/abyss.jpg) |
+| **Abyss Pets** (new)<br>Abyss, but the jellies are your pets. They hang around, blink, do backflips, twirls, loop-de-loops and happy dances, and every so often one swims up to the glass to boop it and wave at you. | |
+| ![Abyss Pets](docs/abyss-pets.jpg) | |
 | **Prairie Fireflies** (new)<br>Thousands of fireflies blinking over dark grass under the Milky Way. | **Fractal Dive** (new)<br>Endless dives into the Mandelbrot set, drawn as razor-thin neon lines. Gets more detailed the higher your resolution. |
 | ![Prairie Fireflies](docs/prairie-fireflies.jpg) | ![Fractal Dive](docs/fractal-dive.jpg) |
 | **Neon Galaxy**<br>A spinning spiral galaxy with saturated nebulae, tuned for OLED. | **Neon Highway**<br>Synthwave road into a neon sunset. |
@@ -90,6 +92,7 @@ Every wallpaper is just a web page. If it runs in Chrome, it runs on your deskto
 
 ## What's new
 
+- **v0.9.0**: new wallpaper, Abyss Pets: jellies that stick around, do tricks and wave at you.
 - **v0.8.5**: jellyfish tentacles stay attached when they tilt.
 - **v0.8.4**: Abyss jellies swim, wander and glow in neon; GPU scenes stay crisp no matter how long the PC's been on.
 - **v0.8.3**: Start with Windows works again after updates, and stays on.

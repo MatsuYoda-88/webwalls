@@ -5,6 +5,9 @@
 
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
+## New in v0.9: Abyss Pets
+- **New wallpaper: Abyss Pets.** Same deep sea as Abyss, but the jellies are your pets. They stick around and never leave the screen, blink at you, and take turns showing off: **backflips, twirls, loop-de-loops and a rainbow happy dance**. About every minute and a quarter, one swims right up to the glass, gets big, boops it with a ripple, smiles and **waves at you**.
+
 ## New in v0.8.5
 - Abyss: jellyfish tentacles stay attached to the bell when it tilts (each one is pinned to its own spot on the rim, and they come out of it straight before swaying).
 
@@ -43,7 +46,7 @@ Four new GPU wallpapers built to show off high-res OLEDs. They render at your sc
 Every wallpaper is just a web page. **[How to add your own wallpapers](https://github.com/MatsuYoda-88/webwalls/blob/main/docs/ADD-WALLPAPERS.md)**: load ones friends send you, add them to the list, or make your own (there's a starter and a ready-made AI prompt).
 
 ## What's in it
-- 12 animated wallpapers: Event Horizon, Abyss, Prairie Fireflies, Fractal Dive (new in v0.8), Neon Galaxy (new in v0.6, OLED-tuned), Neon Highway, Midnight Rain City, Aurora Lake, Baldwin's Crusade, and the Montgisard trilogy
+- 13 animated wallpapers: Abyss Pets (new in v0.9), Event Horizon, Abyss, Prairie Fireflies, Fractal Dive (new in v0.8), Neon Galaxy (new in v0.6, OLED-tuned), Neon Highway, Midnight Rain City, Aurora Lake, Baldwin's Crusade, and the Montgisard trilogy
 - Works on every monitor: 32:9 super-ultrawide, ultrawide, 16:9 and portrait screens all get their own properly fitted copy
 - Gaming-aware: the screen your game is on sleeps completely, and your other screens drop to 30 FPS / half resolution while you play (windowed games too)
 - Battery saver, FPS cap, quality setting, and load your own HTML wallpapers

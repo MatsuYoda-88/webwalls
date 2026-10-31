@@ -226,6 +226,236 @@ void main(){
   gl_FragColor=vec4(clamp(col,0.,1.),1.);
 }""")
 
+# ---------------------------------------------------------------- Abyss Pets
+SCENES["abyss-pets"] = ("Abyss Pets", """Abyss, but the jellies are your pets. A few neon jellies stick around and
+   never leave the screen. Every so often one swims right up to the glass, boops it and waves at
+   you; the others take turns doing tricks: backflips, twirls, loop-de-loops and a happy dance.
+   They blink, too. Same deep-sea background as Abyss; everything else is exact black.""", r"""
+float flashes(vec2 p,float g,float px,float t,out float hue){
+  vec2 id=floor(p/g), f=p/g-id; float n=h21(id); hue=h21(id+4.4);
+  if(n<.55) return 0.;
+  vec2 o=.2+.6*h22(id+2.2); float d=length((f-o)*g)/px;
+  float ph=fract(t*(.05+.08*h21(id+8.))+n*7.);
+  float fl=smoothstep(0.,.03,ph)*(1.-smoothstep(.04,.22,ph));
+  return fl*(exp(-d*d*.6)+.35*exp(-d*.35));
+}
+vec3 neon(float k){
+  k=fract(k)*7.;
+  if(k<1.) return vec3(1.,.12,.62);
+  if(k<2.) return vec3(.05,.95,1.);
+  if(k<3.) return vec3(.15,.38,1.);
+  if(k<4.) return vec3(.62,.18,1.);
+  if(k<5.) return vec3(.45,1.,.22);
+  if(k<6.) return vec3(1.,.48,.08);
+  return vec3(1.,.15,1.);
+}
+float ease(float x){ x=clamp(x,0.,1.); return x*x*(3.-2.*x); }
+float sdSeg(vec2 p,vec2 a,vec2 b){ vec2 pa=p-a,ba=b-a; float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return length(pa-ba*h); }
+// where pet i likes to hang out: its own patch of the screen, never off it
+vec2 home(float fi,float t,float asp,float fN){
+  float room=max(asp-.38,.2);
+  float lane=((fi+.5)/fN-.5)*room, lw=room/fN;
+  float x=lane+lw*.6*(sin(t*(.05+.03*h21(vec2(fi,1.)))+fi*2.)*.7+sin(t*(.13+.04*h21(vec2(fi,2.)))+fi)*.3);
+  float y=.1+.15*(sin(t*(.07+.03*h21(vec2(fi,3.)))+fi*3.)*.7+sin(t*.17+fi*1.3)*.3);
+  return vec2(x,y);
+}
+void main(){
+  vec2 uv=(gl_FragCoord.xy-.5*R)/R.y;
+  float asp=R.x/R.y, px=1./R.y, t=T;
+  vec3 col=vec3(0);
+  // same deep sea as Abyss: faint god-rays, marine snow at three depths, plankton flashes
+  float top=smoothstep(-.1,.55,uv.y);
+  float rays=pow(max(0.,sin(uv.x*7.+sin(uv.x*2.3+t*.07)*2.+t*.05)),6.)*pow(max(0.,sin(uv.x*3.1-t*.04)),2.);
+  col+=vec3(.0,.10,.16)*rays*top*top*.35;
+  for(int k=0;k<3;k++){
+    float fk=float(k), sc=1.+fk*.7;
+    vec2 q=uv*sc+vec2(.04*sin(t*.07+fk*2.),t*(.006+.004*fk)+fk*13.);
+    col+=stars(q,.022,px*sc,.72,t)*vec3(.55,.75,.85)*(.55-fk*.13);
+  }
+  float hue; float fl=flashes(uv+vec2(t*.004,0.),.045,px,t,hue);
+  col+=fl*mix(vec3(.1,.9,1.),vec3(.3,.4,1.),hue);
+  fl=flashes(uv*1.6+vec2(9.,t*.003),.04,px*1.6,t*1.1,hue);
+  col+=fl*mix(vec3(.1,1.,.75),vec3(.6,.2,1.),hue)*.6;
+
+  int N=int(clamp(floor(asp*1.6+.5),3.,6.));
+  float fN=float(N);
+  float occ=0., visitorG=-1.;
+  {
+    float GP=75., gt=t+20., gc=floor(gt/GP), gk=gt-gc*GP-(GP-11.);
+    if(gk>0.){
+      float vi=floor(h21(vec2(gc,77.))*fN);
+      float g=ease(gk/2.)*ease((11.-gk)/2.);
+      vec2 C=home(vi,t,asp,fN);
+      vec2 v=home(vi,t+.5,asp,fN)-home(vi,t-.5,asp,fN);
+      float th=mix(clamp(v.x*8.,-.5,.5),.1*sin(gk*2.4),g);
+      C=mix(C,vec2(clamp(C.x,-asp*.28,asp*.28),.04),g);
+      float S=mix(.05+.022*h21(vec2(vi,9.)),.2,g);
+      float sqz=.5+.5*cos((1.1+.5*h21(vec2(vi,3.)))*t);
+      vec2 e=(rot(th)*(uv-C)/S)/vec2(1.08-.2*sqz,.72+.16*sqz);
+      float db=e.y>0.?length(e)-1.:max(abs(e.x)-1.+(-e.y)*.35,-e.y-.24);
+      occ=g*.92*smoothstep(.05,-.05,db);
+      visitorG=vi;
+    }
+  }
+  for(int i=0;i<6;i++){
+    if(i>=N) break;
+    float fi=float(i);
+    float base=(.05+.022*h21(vec2(fi,9.)));
+    float w=1.1+.5*h21(vec2(fi,3.));
+    vec2 C=home(fi,t,asp,fN);
+    vec2 v=home(fi,t+.5,asp,fN)-home(fi,t-.5,asp,fN);
+    float th=clamp(v.x*8.,-.5,.5);
+    float S=base, sq=1., fling=0., flingDir=1., armE=0., happy=0., boop=-1., glass=0.;
+    float phase=w*t;
+    // ---- visits to the glass: one pet at a time, roughly every 75 s, taking turns
+    float GP=75., gt=t+20., gc=floor(gt/GP), gk=gt-gc*GP-(GP-11.);
+    float visitor=floor(h21(vec2(gc,77.))*fN);
+    if(gk>0.&&abs(visitor-fi)<.5){
+      float GT=11.;
+      glass=ease(gk/2.)*ease((GT-gk)/2.);
+      vec2 target=vec2(clamp(C.x,-asp*.28,asp*.28),.04);
+      C=mix(C,target,glass);
+      S=mix(S,.2,glass);
+      th=mix(th,.1*sin(gk*2.4),glass);
+      armE=ease((gk-2.3)/.8)*ease((GT-2.4-gk)/.8);
+      boop=gk-2.;
+    } else {
+      // ---- tricks: every ~50-90 s each pet shows off for a few seconds
+      float P=50.+40.*h21(vec2(fi,7.));
+      float tc=t+P*h21(vec2(fi,8.));
+      float cyc=floor(tc/P), u=tc-cyc*P, TT=9., k=u-(P-TT);
+      if(k>0.){
+        float r=h21(vec2(fi+.5,cyc));
+        if(r<.32){                                       // backflip with a hop
+          float f=ease((k-3.)/2.2);
+          flingDir=h21(vec2(fi,cyc+9.))<.5?1.:-1.;
+          th+=flingDir*f*6.2831853;
+          C.y+=sin(f*3.14159)*.11;
+          fling=sin(f*3.14159);
+          S*=1.+.15*sin(f*3.14159);
+        } else if(r<.56){                                // twirl
+          float f=ease((k-2.5)/4.);
+          sq=cos(f*12.566);
+          C.y+=sin(f*3.14159)*.06;
+          fling=.5*sin(f*3.14159);
+        } else if(r<.8){                                 // loop-de-loop
+          float f=ease((k-1.5)/5.5);
+          float a=f*6.2831853, Rl=.11;
+          C+=Rl*vec2(sin(a),1.-cos(a));
+          th+=a;
+          fling=sin(f*3.14159);
+          flingDir=-1.;
+        } else {                                         // happy dance
+          happy=ease(k/1.5)*ease((TT-k)/1.5);
+          C.y+=abs(sin(k*4.5))*.05*happy;
+          th+=.35*sin(k*6.)*happy;
+          phase+=happy*k*4.;
+        }
+      }
+    }
+    float squeeze=.5+.5*cos(phase);
+    vec3 c1=neon(h21(vec2(fi,4.))+t*.003);
+    vec3 c2=neon(h21(vec2(fi,4.))+.18+t*.003);
+    if(happy>0.){ vec3 rb=hsv(fract(t*.35+fi*.15),.9,1.); c1=mix(c1,rb,happy); c2=mix(c2,hsv(fract(t*.35+fi*.15+.2),.9,1.),happy); }
+    float bright=.9+.35*glass;
+
+    // glass boop ripple
+    if(boop>0.&&boop<1.8){
+      vec2 bc=C+vec2(0.,S*.55);
+      float rr=boop*.32, d=abs(length(uv-bc)-rr)/px;
+      col+=c1*exp(-d*d*.04)*.45*(1.-boop/1.8);
+    }
+
+    // ---- into the pet's own frame (rotated, squashed for the twirl, scaled to its size)
+    vec2 q=rot(th)*(uv-C);
+    float sqa=max(abs(sq),.12);
+    q.x/=sqa;
+    vec2 p=q/S;
+    float pxl=px/S;
+    float L=4.6+2.2*h21(vec2(fi,6.));
+    if(p.y>3.4||p.y<-L-1.2||abs(p.x)>2.8+.55*max(-p.y,0.)) continue;
+    vec2 vl=(rot(th)*v)/S;                                // its swim speed, in its own frame
+    vec3 jc=vec3(0);
+
+    // bell
+    float bw=1.08-.2*squeeze, bh=.72+.16*squeeze;
+    vec2 e=p/vec2(bw,bh);
+    float db=e.y>0.?length(e)-1.:max(abs(e.x)-1.+(-e.y)*.35,-e.y-.24);
+    float dpx=abs(db)/pxl;
+    float gp=.8+.45*squeeze;
+    jc+=c1*bright*gp*(exp(-dpx*.5)*1.25+exp(-dpx*.07)*.18);
+    if(db<0.){
+      float ribs=pow(abs(sin(atan(e.x,e.y+.3)*7.)),10.)*.3;
+      float core=exp(-length(e-vec2(0.,.25))*2.4)*.7;
+      jc+=mix(c1,c2,.5+.5*e.y)*bright*(.12+ribs*smoothstep(-.2,.6,e.y)+core*gp);
+      // eyes (they blink) + a smile when they visit or dance
+      float bp=fract(t*.19+fi*.37);
+      float blink=(bp>.97)?.12:1.;
+      float side=sign(p.x);
+      vec2 ep=vec2(abs(p.x),p.y)-vec2(.32,.26);
+      float de=(length(ep/vec2(1.,blink))-.085)/pxl;
+      jc+=vec3(1.,.97,.95)*bright*(1.-smoothstep(-1.,1.5,de))*.9;
+      float sm=max(glass,happy);
+      if(sm>0.&&p.y<.17){
+        float ds=abs(length(p-vec2(0.,.2))-.17)/pxl;
+        jc+=vec3(1.,.95,.95)*sm*exp(-ds*ds*.3)*.8*step(abs(p.x),.15);
+      }
+    }
+
+    // tentacles, pinned to the rim, hanging in the pet's own frame
+    for(int j=0;j<9;j++){
+      float fj=float(j);
+      bool oral=j==8;
+      vec2 anc=vec2(oral?0.:bw*(-.82+1.64*fj/7.),-.18*bh);
+      float s=anc.y-p.y;
+      float Lk=oral?L*.55:L*(.82+.18*h21(vec2(fi,fj+20.)));
+      if(s<-.06||s>Lk) continue;
+      float sc=max(s,0.);
+      float fade=pow(1.-sc/Lk,1.3)*smoothstep(-.06,.04,s);
+      float grow=smoothstep(0.,1.5,sc);
+      float trail=clamp(-vl.x*sc*.35,-sc*.45,sc*.45);
+      float swish=-flingDir*fling*sc*sc*.07;
+      if(oral){
+        float xa=anc.x+trail*.8+swish+sin(sc*.8-t*1.1+fi)*.3*grow;
+        float wa=.2*(1.-sc/Lk)+.02;
+        float d=abs(p.x-xa)/wa;
+        jc+=c2*bright*.5*exp(-d*d*1.4)*(.55+.45*sin(sc*9.-t*2.6))*fade;
+        continue;
+      }
+      // one tentacle on the right turns into a waving arm at the glass
+      float isArm=(j==6)?armE:0.;
+      float amp=(.16+.12*h21(vec2(fi,fj)))*sc*grow;
+      float xk=anc.x+trail+swish+sin(sc*1.3-t*(1.4+.4*h21(vec2(fj,fi)))+fj*1.7)*amp*.4;
+      float d=abs(p.x-xk)/pxl;
+      float wave=pow(.5+.5*sin(sc*2.6-t*4.5+fi),6.);
+      jc+=mix(c1,c2,sc/L)*bright*fade*(1.-isArm)*(exp(-d*d*.3)*(.85+1.1*wave)+exp(-d*.1)*.06);
+    }
+    // waving arm: a bendy tapered tentacle that curls up from the rim and waves, wiggle running along it
+    if(armE>0.){
+      vec2 pt=vec2(bw*(.82-1.64/7.),-.18*bh);
+      float ang0=.15;                                     // starts hanging straight down
+      float dmin=1e9, wAt=1.;
+      for(int n=0;n<10;n++){
+        float fn=float(n)/10.;
+        float seg=.26;
+        // swings out sideways from the rim, curls up toward the tip, and the wave travels along it
+        float wv=sin(t*6.5-fn*3.)*(.25+.6*fn);
+        float a2=ang0+armE*(1.85+1.15*fn+wv);
+        vec2 nx=pt+seg*vec2(sin(a2),-cos(a2));
+        float d=sdSeg(p,pt,nx);
+        if(d<dmin){ dmin=d; wAt=1.-.65*fn; }
+        pt=nx;
+      }
+      float d=dmin/pxl/max(wAt,.3);
+      float dt=length(p-pt)/pxl;
+      jc+=mix(c1,c2,.4)*bright*armE*(exp(-d*d*.09)*1.1+exp(-d*.1)*.06+exp(-dt*dt*.08)*.35);
+    }
+    col+=jc*(abs(fi-visitorG)<.5?1.:1.-occ);
+  }
+  col=col/(1.+col*.12);
+  gl_FragColor=vec4(clamp(col,0.,1.),1.);
+}""")
+
 # ---------------------------------------------------------------- Prairie Fireflies
 SCENES["prairie-fireflies"] = ("Prairie Fireflies", """A summer night on the prairie: the Milky Way wheeling slowly overhead, grass
    bending in the wind, and thousands of fireflies blinking at three depths. The ground is
@@ -351,7 +581,7 @@ PAGE = r"""<!doctype html>
    Renders at the screen's exact device pixels, up to 8K (7680x4320 worth), and animates
    from real time so it's equally smooth at 60, 120, 144 or 240 Hz.
    Generated by tools/gen_oled.py — edit there.
-   URL options: ?scale=0.75 (render scale), ?adaptive=0 (never drop resolution) */
+   URL options: ?scale=0.75 (render scale), ?adaptive=0 (never drop resolution), ?t=600 (jump the scene clock) */
 (() => {
 const qs = new URLSearchParams(location.search);
 const USER_SCALE = Math.min(Math.max(parseFloat(qs.get('scale')) || 1, 0.25), 2);
@@ -417,8 +647,8 @@ function adapt(dt) {
 // Scene clock loops every 30 min. Graphics cards round big numbers, so a clock that just keeps counting
 // makes long-running scenes stutter and grow stripes after a few hours. At the loop point the screen
 // dips to black for a moment so the jump is never seen.
-const LOOP = 1800, DIP = 0.8;
-const t0 = performance.now(), seed = (Date.now() / 1000) % LOOP;
+const LOOP = 1800, DIP = 0.8, HOLD = qs.has('hold');   // ?hold freezes the clock at ?t (testing / screenshots)
+const t0 = performance.now(), seed = qs.has('t') ? parseFloat(qs.get('t')) - 10 : (Date.now() / 1000) % LOOP;   // ?t= jumps the clock (testing)
 let dipped = false;
 let raf = 0;
 function frame(now) {
@@ -426,7 +656,7 @@ function frame(now) {
   if (last) adapt(now - last);
   last = now;
   gl.uniform2f(uR, c.width, c.height);
-  const tt = (((now - t0) / 1000 + seed) % LOOP + LOOP) % LOOP;
+  const tt = ((((HOLD ? 0 : now - t0) / 1000) + seed) % LOOP + LOOP) % LOOP;
   const edge = Math.min(tt, LOOP - tt);
   const op = Math.max(0, Math.min(1, edge / DIP));
   if (op < 1 || dipped) { c.style.opacity = op.toFixed(3); dipped = op < 1; }
