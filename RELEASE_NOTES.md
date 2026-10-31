@@ -5,6 +5,12 @@
 
 No admin rights needed. Uninstall any time from **Settings → Apps → web.walls**.
 
+## New in v0.9.1: the pets got wild
+- **Random now.** No set schedule: every few seconds each pet rolls the dice on whether to do something, and what.
+- **New tricks:** triple flips, heart bubbles, naps with floating Zzz's, boing bounces, zoomies across the screen, sparkle sneezes (ah... ah... ACHOO), getting spooked, and buddy spins where two neighbours grab each other and spin around.
+- **New glass visits:** besides waving, a random pet might blow you a big heart or smoosh its face flat on the glass.
+- **More faces:** happy ^ ^ eyes, sleepy closed eyes, shocked O O eyes and an "o" mouth.
+
 ## New in v0.9: Abyss Pets
 - **New wallpaper: Abyss Pets.** Same deep sea as Abyss, but the jellies are your pets. They stick around and never leave the screen, blink at you, and take turns showing off: **backflips, twirls, loop-de-loops and a rainbow happy dance**. About every minute and a quarter, one swims right up to the glass, gets big, boops it with a ripple, smiles and **waves at you**.
 
